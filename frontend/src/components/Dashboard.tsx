@@ -3,12 +3,15 @@ import { useState, useEffect } from 'react'
 import { TransactionHistory } from './TransactionHistory'
 import { useDebounce } from '../hooks/useDebounce'
 import { useStellarContext } from '../context/StellarContext'
+import { useNetwork } from '../context/NetworkContext'
+import { stellarExplorerUrl, truncateAddress } from '../utils/formatting'
 import { STELLAR_CONFIG } from '../config/stellar'
 import type { TokenInfo } from '../types'
 
 export const TokenDashboard: React.FC = () => {
   const { stellarService } = useStellarContext()
   const { wallet } = useWallet()
+  const { network } = useNetwork()
   const [tokens, setTokens] = useState<TokenInfo[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -82,7 +85,18 @@ export const TokenDashboard: React.FC = () => {
         />
         <ul className="space-y-2">
           {results.map((r, i) => (
-            <li key={i} className="p-2 border rounded text-sm">{JSON.stringify(r)}</li>
+            <li key={i} className="p-3 border rounded text-sm flex items-center justify-between gap-2">
+              <span className="font-medium">{r.name} <span className="text-gray-500">({r.symbol})</span></span>
+              <a
+                href={stellarExplorerUrl('contract', r.creator, network)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-mono text-xs text-indigo-500 hover:underline"
+                title={r.creator}
+              >
+                {truncateAddress(r.creator)}
+              </a>
+            </li>
           ))}
         </ul>
       </div>

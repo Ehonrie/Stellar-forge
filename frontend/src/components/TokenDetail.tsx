@@ -5,6 +5,8 @@ import { useParams, Link } from 'react-router-dom'
 import { stellarService } from '../services/stellar'
 import { ipfsService } from '../services/ipfs'
 import { IPFS_CONFIG } from '../config/ipfs'
+import { useNetwork } from '../context/NetworkContext'
+import { stellarExplorerUrl } from '../utils/formatting'
 import type { TokenInfo, IPFSMetadata } from '../types'
 import { Card } from './UI/Card'
 import { Button } from './UI/Button'
@@ -33,6 +35,7 @@ export const TokenDetail: React.FC = () => {
   const { stellarService } = useStellarContext()
   const { address } = useParams<{ address: string }>()
   const { addToast } = useToast()
+  const { network } = useNetwork()
 
   const [token, setToken] = useState<TokenInfo | null>(null)
   const [metadata, setMetadata] = useState<IPFSMetadata | null>(null)
@@ -120,7 +123,16 @@ export const TokenDetail: React.FC = () => {
         <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 text-sm">
           <div>
             <dt className="text-gray-500 dark:text-gray-400">Address</dt>
-            <dd className="font-mono text-xs break-all text-gray-900 dark:text-gray-100 mt-1">{address}</dd>
+            <dd className="font-mono text-xs break-all text-gray-900 dark:text-gray-100 mt-1">
+              <a
+                href={stellarExplorerUrl('contract', address!, network)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-indigo-500 hover:underline"
+              >
+                {address}
+              </a>
+            </dd>
           </div>
           <div>
             <dt className="text-gray-500 dark:text-gray-400">Total Supply</dt>
@@ -133,7 +145,16 @@ export const TokenDetail: React.FC = () => {
           <div>
             <dt className="text-gray-500 dark:text-gray-400">Creator</dt>
             <dd className="font-mono text-xs break-all text-gray-900 dark:text-gray-100 mt-1">
-              {token.creator || '—'}
+              {token.creator ? (
+                <a
+                  href={stellarExplorerUrl('account', token.creator, network)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-indigo-500 hover:underline"
+                >
+                  {token.creator}
+                </a>
+              ) : '—'}
             </dd>
           </div>
           {token.createdAt && (

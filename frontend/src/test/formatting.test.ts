@@ -1,5 +1,32 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { formatTimestamp, timeAgo, formatXLM, truncateAddress, stroopsToXLM, xlmToStroops } from '../utils/formatting'
+import { formatTimestamp, timeAgo, formatXLM, truncateAddress, stroopsToXLM, xlmToStroops, stellarExplorerUrl } from '../utils/formatting'
+
+describe('stellarExplorerUrl', () => {
+  it('builds a testnet tx link', () => {
+    expect(stellarExplorerUrl('tx', 'abc123', 'testnet'))
+      .toBe('https://stellar.expert/explorer/testnet/tx/abc123')
+  })
+
+  it('builds a mainnet tx link', () => {
+    expect(stellarExplorerUrl('tx', 'abc123', 'mainnet'))
+      .toBe('https://stellar.expert/explorer/public/tx/abc123')
+  })
+
+  it('builds a contract link', () => {
+    expect(stellarExplorerUrl('contract', 'CABC', 'testnet'))
+      .toBe('https://stellar.expert/explorer/testnet/contract/CABC')
+  })
+
+  it('builds an account link', () => {
+    expect(stellarExplorerUrl('account', 'GABC', 'mainnet'))
+      .toBe('https://stellar.expert/explorer/public/account/GABC')
+  })
+
+  it('defaults to testnet', () => {
+    expect(stellarExplorerUrl('tx', 'xyz')).toContain('testnet')
+  })
+})
+
 
 describe('formatXLM', () => {
   it('formats a number to 7 decimal places with XLM suffix', () => {

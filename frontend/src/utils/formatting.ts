@@ -26,6 +26,24 @@ const DATE_FORMAT = new Intl.DateTimeFormat('en-US', {
 export const formatTimestamp = (timestamp: number): string =>
   DATE_FORMAT.format(new Date(timestamp * 1000))
 
+type ExplorerLinkType = 'tx' | 'contract' | 'account'
+type Network = 'testnet' | 'mainnet'
+
+const EXPLORER_BASES: Record<Network, string> = {
+  mainnet: 'https://stellar.expert/explorer/public',
+  testnet: 'https://stellar.expert/explorer/testnet',
+}
+
+export const stellarExplorerUrl = (
+  type: ExplorerLinkType,
+  value: string,
+  network: Network = 'testnet',
+): string => {
+  const base = EXPLORER_BASES[network]
+  const path = type === 'tx' ? 'tx' : type === 'contract' ? 'contract' : 'account'
+  return `${base}/${path}/${value}`
+}
+
 export const timeAgo = (timestamp: number): string => {
   const seconds = Math.floor(Date.now() / 1000) - timestamp
   if (seconds < 0) return 'just now'

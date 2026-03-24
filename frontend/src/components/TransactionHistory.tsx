@@ -2,6 +2,8 @@ import { Button,Spinner } from './UI';
 import { useState, useEffect, useCallback } from 'react'
 import { stellarService } from '../services/stellar'
 import { STELLAR_CONFIG } from '../config/stellar'
+import { useNetwork } from '../context/NetworkContext'
+import { stellarExplorerUrl } from '../utils/formatting'
 import type { ContractEvent, ContractEventType } from '../types'
 
 interface Props {
@@ -98,6 +100,7 @@ export const TransactionHistory: React.FC<Props> = ({
   pageSize = 20,
 }) => {
   const { stellarService } = useStellarContext()
+  const { network } = useNetwork()
   const [events, setEvents] = useState<ContractEvent[]>([])
   const [cursor, setCursor] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -198,7 +201,7 @@ export const TransactionHistory: React.FC<Props> = ({
             </div>
             {renderEventData(event)}
             <a
-              href={`https://stellar.expert/explorer/${STELLAR_CONFIG.network}/tx/${event.txHash}`}
+              href={stellarExplorerUrl('tx', event.txHash, network)}
               target="_blank"
               rel="noopener noreferrer"
               className="mt-0.5 text-xs text-indigo-500 hover:underline font-mono"
