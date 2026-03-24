@@ -44,7 +44,12 @@ export const TokenCreateForm: React.FC = () => {
       symbol,
       decimals: parseInt(decimals),
       initialSupply,
-      metadata: description ? { description } : undefined,
+      ...(description && {
+        metadata: {
+          description,
+          image: new File([], ''), // Placeholder - update when image upload is implemented
+        },
+      }),
     }
 
     // Request deployment - will show modal on mainnet, proceed directly on testnet
