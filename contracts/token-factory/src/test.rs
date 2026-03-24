@@ -324,6 +324,52 @@ fn test_update_fees_unauthorized() {
     );
 }
 
+// ── update_treasury ───────────────────────────────────────────────────────────
+
+#[test]
+fn test_update_treasury() {
+    let s = Setup::new();
+    let new_treasury = Address::generate(&s.env);
+    
+    s.client.update_treasury(&s.admin, &new_treasury);
+    
+    let state = s.client.get_state();
+    assert_eq!(state.treasury, new_treasury);
+}
+
+#[test]
+fn test_update_treasury_unauthorized() {
+    let s = Setup::new();
+    let stranger = Address::generate(&s.env);
+    let new_treasury = Address::generate(&s.env);
+    
+    assert_eq!(
+        s.client.try_update_treasury(&stranger, &new_treasury),
+        Err(Ok(Error::Unauthorized))
+    );
+}
+
+#[test]
+fn test_update_treasury_fee_routing() {
+    let s = Setup::new();
+    let new_treasury = Address::generate(&s.env);
+    
+    s.client.update_treasury(&s.admin, &new_treasury);
+    
+    let admin = Address::generate(&s.env);
+    s.fund(&admin, 500);
+
+    let token_addr = s.new_token(&admin);
+    s.client.set_metadata(
+        &token_addr, &admin,
+        &String::from_str(&s.env, "ipfs://Qm123"),
+        &500,
+    );
+
+    assert_eq!(TokenClient::new(&s.env, &s.fee_token).balance(&s.treasury), 0);
+    assert_eq!(TokenClient::new(&s.env, &s.fee_token).balance(&new_treasury), 500);
+}
+
 // ── get_token_info ────────────────────────────────────────────────────────────
 
 #[test]

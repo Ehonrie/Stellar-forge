@@ -335,6 +335,23 @@ impl TokenFactory {
         Ok(())
     }
 
+    pub fn update_treasury(
+        env: Env,
+        admin: Address,
+        new_treasury: Address,
+    ) -> Result<(), Error> {
+        admin.require_auth();
+        let mut state = Self::load_state(&env);
+        if state.admin != admin {
+            return Err(Error::Unauthorized);
+        }
+        state.treasury = new_treasury.clone();
+        Self::save_state(&env, &state);
+        env.events()
+            .publish((soroban_sdk::Symbol::new(&env, "treasury_updated"),), (new_treasury,));
+        Ok(())
+    }
+
     pub fn transfer_admin(env: Env, admin: Address, new_admin: Address) -> Result<(), Error> {
         admin.require_auth();
         let mut state = Self::load_state(&env);
