@@ -209,6 +209,88 @@ fn test_transfer_admin_to_same_address_fails() {
     assert_eq!(result, Err(Ok(Error::InvalidParameters)));
 }
 
+// ── invalid parameter validation ─────────────────────────────────────────────
+
+#[test]
+fn test_create_token_rejects_empty_name() {
+    // Requirements: 1.1, 6.1
+    let (env, client, _admin, _treasury) = setup_env();
+    let creator = Address::generate(&env);
+    let result = client.try_create_token(
+        &creator,
+        &String::from_str(&env, ""),
+        &String::from_str(&env, "MTK"),
+        &7,
+        &1_000_000,
+        &1000,
+    );
+    assert_eq!(result, Err(Ok(Error::InvalidParameters)));
+}
+
+#[test]
+fn test_create_token_rejects_empty_symbol() {
+    // Requirements: 2.1, 6.2
+    let (env, client, _admin, _treasury) = setup_env();
+    let creator = Address::generate(&env);
+    let result = client.try_create_token(
+        &creator,
+        &String::from_str(&env, "MyToken"),
+        &String::from_str(&env, ""),
+        &7,
+        &1_000_000,
+        &1000,
+    );
+    assert_eq!(result, Err(Ok(Error::InvalidParameters)));
+}
+
+#[test]
+fn test_create_token_rejects_decimals_19() {
+    // Requirements: 3.1, 6.3
+    let (env, client, _admin, _treasury) = setup_env();
+    let creator = Address::generate(&env);
+    let result = client.try_create_token(
+        &creator,
+        &String::from_str(&env, "MyToken"),
+        &String::from_str(&env, "MTK"),
+        &19,
+        &1_000_000,
+        &1000,
+    );
+    assert_eq!(result, Err(Ok(Error::InvalidParameters)));
+}
+
+#[test]
+fn test_create_token_accepts_decimals_18() {
+    // Requirements: 3.2, 6.4
+    let (env, client, _admin, _treasury) = setup_env();
+    let creator = Address::generate(&env);
+    let result = client.try_create_token(
+        &creator,
+        &String::from_str(&env, "MyToken"),
+        &String::from_str(&env, "MTK"),
+        &18,
+        &1_000_000,
+        &1000,
+    );
+    assert_ne!(result, Err(Ok(Error::InvalidParameters)));
+}
+
+#[test]
+fn test_create_token_rejects_negative_supply() {
+    // Requirements: 4.1, 6.5
+    let (env, client, _admin, _treasury) = setup_env();
+    let creator = Address::generate(&env);
+    let result = client.try_create_token(
+        &creator,
+        &String::from_str(&env, "MyToken"),
+        &String::from_str(&env, "MTK"),
+        &7,
+        &-1,
+        &1000,
+    );
+    assert_eq!(result, Err(Ok(Error::InvalidParameters)));
+}
+
 // ── get_tokens_by_creator ─────────────────────────────────────────────────────
 
 #[test]
