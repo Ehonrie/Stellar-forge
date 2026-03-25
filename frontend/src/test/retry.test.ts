@@ -128,6 +128,7 @@ describe('withRetry', () => {
     const fn = vi.fn().mockRejectedValue(error)
 
     const promise = withRetry(fn, { maxAttempts: 3, baseDelayMs: 500 })
+    promise.catch(() => {}) // prevent unhandled rejection
 
     await vi.advanceTimersByTimeAsync(500)
     await vi.advanceTimersByTimeAsync(1000)
@@ -151,6 +152,7 @@ describe('withRetry', () => {
     const fn = vi.fn().mockRejectedValue({ message: 'Network error' })
 
     const promise = withRetry(fn)
+    promise.catch(() => {}) // prevent unhandled rejection
 
     await vi.advanceTimersByTimeAsync(500)
     await vi.advanceTimersByTimeAsync(1000)
