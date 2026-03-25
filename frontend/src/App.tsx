@@ -15,8 +15,9 @@ import { MintForm } from './components/MintForm'
 import { BurnForm } from './components/BurnForm'
 import { Dashboard } from './components/Dashboard'
 import { TokenDetail } from './components/TokenDetail'
+import { isFactoryConfigured } from './config/env'
 
-const ProtectedRoute: React.FC<{ children: JSX.Element }> = ({ children }) => {
+const ProtectedRoute: React.FC<{ children: React.ReactElement }> = ({ children }) => {
   const { wallet } = useWallet()
   if (!wallet.isConnected) return <Navigate to="/" replace />
   return children
@@ -136,6 +137,14 @@ function AppContent() {
           </div>
         )}
 
+        {!isFactoryConfigured() && (
+          <div className="bg-yellow-50 border-b border-yellow-300 p-4" role="alert">
+            <div className="max-w-7xl mx-auto text-yellow-800 text-sm font-medium">
+              ⚠️ Factory contract not configured. Please set <code className="font-mono bg-yellow-100 px-1 rounded">VITE_FACTORY_CONTRACT_ID</code> in your <code className="font-mono bg-yellow-100 px-1 rounded">.env</code> file.
+            </div>
+          </div>
+        )}
+
         <main id="main-content" className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
           <div className="px-4 py-6 sm:px-0">
             {error && (
@@ -159,6 +168,7 @@ function AppContent() {
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </div>
+            <Dashboard />
           </div>
         </main>
 

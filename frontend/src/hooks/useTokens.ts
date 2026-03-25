@@ -1,76 +1,101 @@
-import { useState, useEffect, useCallback } from 'react'
-import { useStellarContext } from '../context/StellarContext'
-import { useWallet } from './useWallet'
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { stellarService } from '../services/stellar'
+import { STELLAR_CONFIG } from '../config/stellar'
 import type { TokenInfo } from '../types'
 
-const PAGE_SIZE_DEFAULT = 10
+// ── Module-level cache keyed by creator address ('' = all tokens) ─────────────
+const CACHE_TTL_MS = 30_000
+
+interface CacheEntry {
+  tokens: TokenInfo[]
+  fetchedAt: number
+}
+
+const cache = new Map<string, CacheEntry>()
+
+/** Exposed for testing only */
+export function _clearCache() { cache.clear() }
+
+// ── Parallel token fetcher ────────────────────────────────────────────────────
+
+async function fetchTokens(creator?: string): Promise<TokenInfo[]> {
+  const contractId = STELLAR_CONFIG.factoryContractId
+  if (!contractId) throw new Error('VITE_FACTORY_CONTRACT_ID is not configured')
+
+  if (creator) {
+    return stellarService.getTokensByCreator(creator)
+  }
+
+  // Fetch all: get event list then resolve each token address in parallel
+  const { events } = await stellarService.getContractEvents(contractId, 100)
+  const addresses = [
+    ...new Set(
+      events
+        .filter((e) => e.type === 'token_created')
+        .map((e) => e.data.tokenAddress)
+        .filter(Boolean),
+    ),
+  ]
+
+  const results = await Promise.allSettled(
+    addresses.map((addr) => stellarService.getTokenInfo(addr)),
+  )
+
+  return results
+    .filter((r): r is PromiseFulfilledResult<TokenInfo> => r.status === 'fulfilled')
+    .map((r) => r.value)
+}
+
+// ── Hook ──────────────────────────────────────────────────────────────────────
 
 interface UseTokensResult {
   tokens: TokenInfo[]
   isLoading: boolean
-  error: string | null
-  page: number
-  totalCount: number
-  totalPages: number
-  setPage: (page: number) => void
-  reload: () => void
+  error: Error | null
+  refetch: () => void
 }
 
-/**
- * Fetches tokens created by the connected wallet, with page/pageSize pagination.
- * Tokens are fetched all-at-once from the service and sliced client-side so
- * we can show accurate totals without multiple round-trips.
- */
-export function useTokens(pageSize: number = PAGE_SIZE_DEFAULT): UseTokensResult {
-  const { stellarService } = useStellarContext()
-  const { wallet } = useWallet()
+export function useTokens(creator?: string): UseTokensResult {
+  const cacheKey = creator ?? ''
+  const cached = cache.get(cacheKey)
 
-  const [allTokens, setAllTokens] = useState<TokenInfo[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [page, setPage] = useState(1)
+  const [tokens, setTokens] = useState<TokenInfo[]>(cached?.tokens ?? [])
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<Error | null>(null)
+  const fetchingRef = useRef(false)
 
-  const load = useCallback(async () => {
-    if (!wallet.address) {
-      setAllTokens([])
-      setIsLoading(false)
+  const load = useCallback(async (bypassCache: boolean) => {
+    const now = Date.now()
+    const hit = cache.get(cacheKey)
+
+    if (!bypassCache && hit && now - hit.fetchedAt < CACHE_TTL_MS) {
+      setTokens(hit.tokens)
       return
     }
 
+    if (fetchingRef.current) return
+    fetchingRef.current = true
+
     setIsLoading(true)
     setError(null)
+
     try {
-      const list = await stellarService.getTokensByCreator(wallet.address)
-      setAllTokens(list)
-      setPage(1) // reset to first page on reload
+      const result = await fetchTokens(creator)
+      cache.set(cacheKey, { tokens: result, fetchedAt: Date.now() })
+      setTokens(result)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch tokens')
-      setAllTokens([])
+      setError(err instanceof Error ? err : new Error(String(err)))
     } finally {
       setIsLoading(false)
+      fetchingRef.current = false
     }
-  }, [wallet.address, stellarService])
+  }, [cacheKey, creator])
 
   useEffect(() => {
-    load()
+    load(false)
   }, [load])
 
-  const totalCount = allTokens.length
-  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize))
+  const refetch = useCallback(() => load(true), [load])
 
-  // Clamp page in case tokens shrink
-  const safePage = Math.min(page, totalPages)
-  const startIndex = (safePage - 1) * pageSize
-  const tokens = allTokens.slice(startIndex, startIndex + pageSize)
-
-  return {
-    tokens,
-    isLoading,
-    error,
-    page: safePage,
-    totalCount,
-    totalPages,
-    setPage,
-    reload: load,
-  }
+  return { tokens, isLoading, error, refetch }
 }
