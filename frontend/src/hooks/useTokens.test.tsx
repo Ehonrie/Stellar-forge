@@ -1,4 +1,4 @@
-import { renderHook, waitFor } from '@testing-library/react'
+import { renderHook, waitFor, act } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { useTokens, _clearCache } from './useTokens'
 import { stellarService } from '../services/stellar'
@@ -82,7 +82,7 @@ describe('useTokens', () => {
     await waitFor(() => expect(result.current.isLoading).toBe(false))
 
     vi.mocked(stellarService.getTokensByCreator).mockResolvedValue([TOKEN_A, TOKEN_B])
-    result.current.refetch()
+    await act(async () => { result.current.refetch() })
 
     await waitFor(() => expect(result.current.tokens).toHaveLength(2))
     expect(stellarService.getTokensByCreator).toHaveBeenCalledTimes(2)

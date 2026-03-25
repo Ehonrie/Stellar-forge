@@ -43,7 +43,7 @@ export const AddressDisplay = ({
 
       {showExplorer && (
         <a
-          href={stellarExplorerUrl(address, type)}
+          href={stellarExplorerUrl(type, address)}
           target="_blank"
           rel="noopener noreferrer"
           aria-label="View on Stellar Explorer"

@@ -620,8 +620,8 @@ export class StellarService {
     const contractId = STELLAR_CONFIG.factoryContractId
     if (!contractId) {
       return {
-        name: 'Unknown',
-        symbol: '???',
+        name: tokenAddress,
+        symbol: '—',
         decimals: 7,
         totalSupply: '0',
         creator: '',

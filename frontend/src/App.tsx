@@ -18,7 +18,7 @@ import { Dashboard } from './components/Dashboard'
 import { TokenDetail } from './components/TokenDetail'
 import { isFactoryConfigured } from './config/env'
 
-const ProtectedRoute: React.FC<{ children: JSX.Element }> = ({ children }) => {
+const ProtectedRoute: React.FC<{ children: React.ReactElement }> = ({ children }) => {
   const { wallet } = useWallet()
 
   if (!wallet.isConnected) {
