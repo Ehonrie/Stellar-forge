@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { Input, Button, ConfirmModal } from './UI'
 import { useDebounce } from '../hooks/useDebounce'
+import { useTokenBalance } from '../hooks/useTokenBalance'
+import { useWalletContext } from '../context/WalletContext'
 import { stellarService } from '../services/stellar'
 import type { TokenInfo } from '../types'
 
@@ -15,21 +17,32 @@ export const BurnForm: React.FC<BurnFormProps> = ({ tokenAddress: initialAddress
   const [tokenInfo, setTokenInfo] = useState<TokenInfo | null>(null)
   const [pending, setPending] = useState(false)
 
+  const { wallet } = useWalletContext()
   const debouncedAddress = useDebounce(tokenAddress, 300)
+
+  const { balance, refresh: refreshBalance } = useTokenBalance(
+    debouncedAddress,
+    wallet.address ?? '',
+  )
 
   useEffect(() => {
     if (!debouncedAddress) return
     stellarService.getTokenInfo(debouncedAddress).then(setTokenInfo).catch(() => setTokenInfo(null))
   }, [debouncedAddress])
 
+  const amountExceedsBalance =
+    !!amount && !!balance && BigInt(balance) > 0n && BigInt(amount) > BigInt(balance)
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    if (amountExceedsBalance) return
     setPending(true)
   }
 
   const handleConfirm = () => {
     setPending(false)
     // burn logic placeholder
+    refreshBalance()
     onSuccess?.()
   }
 
@@ -48,6 +61,11 @@ export const BurnForm: React.FC<BurnFormProps> = ({ tokenAddress: initialAddress
             Token: {tokenInfo.name} ({tokenInfo.symbol})
           </p>
         )}
+        {wallet.address && debouncedAddress && (
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Your balance: {balance}
+          </p>
+        )}
         <Input
           label="Amount"
           type="number"
@@ -57,7 +75,12 @@ export const BurnForm: React.FC<BurnFormProps> = ({ tokenAddress: initialAddress
           min="0"
           required
         />
-        <Button type="submit" variant="secondary">Burn</Button>
+        {amountExceedsBalance && (
+          <p className="text-sm text-red-500">Amount exceeds your balance of {balance}</p>
+        )}
+        <Button type="submit" variant="secondary" disabled={amountExceedsBalance}>
+          Burn
+        </Button>
       </form>
 
       <ConfirmModal

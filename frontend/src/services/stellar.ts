@@ -62,7 +62,9 @@ function scValToString(val: any, xdr: any): string {
       if (addr.switch() === xdr.ScAddressType.scAddressTypeAccount()) {
         return addr.accountId().publicKey().toString()
       }
-      return Buffer.from(addr.contractId()).toString('hex')
+      return [...new Uint8Array(addr.contractId() as ArrayBuffer)]
+        .map((b: number) => b.toString(16).padStart(2, '0'))
+        .join('')
     }
     if (type === xdr.ScValType.scvI128()) {
       const hi = BigInt(val.i128().hi().toString())
@@ -74,6 +76,7 @@ function scValToString(val: any, xdr: any): string {
     if (type === xdr.ScValType.scvSymbol()) return val.sym().toString()
     if (type === xdr.ScValType.scvVoid()) return 'none'
     if (type === xdr.ScValType.scvVec()) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const items: string[] = (val.vec() ?? []).map((v: any) => scValToString(v, xdr))
       return items.join(', ')
     }
@@ -103,6 +106,7 @@ async function parseRpcEvent(raw: RpcEventResponse): Promise<ContractEvent | nul
 
     const { xdr } = await import('stellar-sdk')
     const valueVal = xdr.ScVal.fromXDR(raw.value, 'base64')
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const items: any[] = valueVal.vec() ?? []
 
     const data: Record<string, string> = {}
@@ -178,11 +182,12 @@ export class StellarService {
     if (!contractId) {
       // No factory contract configured — return a minimal stub so the UI can still render
       return {
-        name: 'Unknown',
-        symbol: '???',
+        name: tokenAddress,
+        symbol: '—',
         decimals: 7,
         totalSupply: '0',
         creator: '',
+        createdAt: 0,
         metadataUri: undefined,
       }
     }
@@ -216,7 +221,7 @@ export class StellarService {
       decimals: 7,
       totalSupply: supply.toString(),
       creator: creationEvent?.data.creator ?? '',
-      createdAt: creationEvent?.timestamp,
+      createdAt: creationEvent?.timestamp ?? 0,
       metadataUri: metadataEvent?.data.metadataUri,
     }
   }

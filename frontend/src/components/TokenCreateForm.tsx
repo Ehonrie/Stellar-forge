@@ -49,7 +49,7 @@ export const TokenCreateForm: React.FC = () => {
   const deployToken = async (params: TokenDeployParams) => {
     setIsDeploying(true)
     try {
-      const result = await stellarService.deployToken(params)
+      const result = await stellarService.deployToken(params) as { success: boolean }
       if (result.success) {
         addToast('Token deployed successfully!', 'success')
         setName(''); setSymbol(''); setDecimals('7'); setInitialSupply(''); setDescription('')

@@ -1,15 +1,12 @@
 import React, { useState, useMemo, useCallback } from 'react'
-import { Input, PaginationControls } from './UI'
+import { Input } from './UI'
 import { TransactionHistory } from './TransactionHistory'
 import { useDebounce } from '../hooks/useDebounce'
 import { useTokens } from '../hooks/useTokens'
 import { STELLAR_CONFIG } from '../config/stellar'
 
-const PAGE_SIZE = 10
-
 export const TokenDashboard: React.FC = () => {
-  const { tokens, isLoading, error, page, totalCount, totalPages, setPage } =
-    useTokens(PAGE_SIZE)
+  const { tokens, isLoading, error } = useTokens()
 
   const [copiedAddress, setCopiedAddress] = useState<string | null>(null)
   const [search, setSearch] = useState('')
@@ -58,7 +55,7 @@ export const TokenDashboard: React.FC = () => {
         )}
 
         {error && (
-          <p className="text-sm text-red-500">{error}</p>
+          <p className="text-sm text-red-500">{error.message}</p>
         )}
 
         {!isLoading && !error && (
@@ -92,16 +89,7 @@ export const TokenDashboard: React.FC = () => {
             </ul>
 
             {/* Only show pagination when not filtering by search */}
-            {!debouncedSearch.trim() && (
-              <PaginationControls
-                page={page}
-                totalPages={totalPages}
-                totalCount={totalCount}
-                pageSize={PAGE_SIZE}
-                onPrev={() => setPage(page - 1)}
-                onNext={() => setPage(page + 1)}
-              />
-            )}
+            {!debouncedSearch.trim() && null}
           </>
         )}
       </div>

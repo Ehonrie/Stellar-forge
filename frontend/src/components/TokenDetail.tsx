@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
 import { useStellarContext } from '../context/StellarContext'
 import { useParams, Link } from 'react-router-dom'
-import { stellarService } from '../services/stellar'
 import { ipfsService } from '../services/ipfs'
 import { IPFS_CONFIG } from '../config/ipfs'
 import { useNetwork } from '../context/NetworkContext'
@@ -68,7 +66,7 @@ export const TokenDetail: React.FC = () => {
       })
       .catch(() => setNotFound(true))
       .finally(() => setLoading(false))
-  }, [address])
+  }, [address, stellarService])
 
   const handleSetMetadata = async (_addr: string, uri: string) => {
     // placeholder — real impl would sign + submit a contract call
@@ -181,7 +179,7 @@ export const TokenDetail: React.FC = () => {
             {imageUrl && (
               <img
                 src={imageUrl}
-                alt={`${token.name} token image`}
+                alt={`${token.name} logo`}
                 className="w-24 h-24 rounded-lg object-cover flex-shrink-0 border border-gray-200 dark:border-gray-700"
                 onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
               />
