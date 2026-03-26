@@ -88,6 +88,13 @@ cd contracts
 cargo build --target wasm32-unknown-unknown --release
 ```
 
+For an optimized binary (requires `binaryen` — install via `apt install binaryen` or `brew install binaryen`):
+```bash
+cd contracts/token-factory
+bash build.sh
+```
+This produces `target/wasm32-unknown-unknown/release/token_factory.optimized.wasm`, which is significantly smaller and lowers on-chain deployment costs.
+
 ### Run Contract Tests
 ```bash
 cd contracts/token-factory
@@ -143,9 +150,13 @@ npm run lint         # Lint code
 cd contracts/token-factory
 cargo build --target wasm32-unknown-unknown --release
 
+# Optimize the binary (reduces size and lowers deployment costs)
+stellar contract optimize \
+  --wasm ../../target/wasm32-unknown-unknown/release/token_factory.wasm
+
 # Deploy to testnet
 stellar contract deploy \
-  --wasm target/wasm32-unknown-unknown/release/token_factory.wasm \
+  --wasm ../../target/wasm32-unknown-unknown/release/token_factory.optimized.wasm \
   --source <your-secret-key> \
   --network testnet
 
